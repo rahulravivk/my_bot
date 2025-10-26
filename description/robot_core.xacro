@@ -1,0 +1,193 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" >
+   <link name="base_link">
+    <inertial>
+      <origin xyz="5.98885692482121E-06 2.22044604925031E-16 0.0100491283682848" rpy="0 0 0" />
+      <mass value="0.0484241150082347" />
+      <inertia
+        ixx="8.34215538486232E-06"
+        ixy="-1.11061536648264E-22"
+        ixz="-1.61248456576148E-09"
+        iyy="1.62936718208243E-05"
+        iyz="6.23666003926994E-22"
+        izz="2.14088946987257E-05" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://my_bot/meshes/base_link.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://my_bot/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- BACK/LEFT WHEEL -->
+  <link name="link_b">
+    <inertial>
+      <origin xyz="6.6859E-07 0.0048787 2.9475E-06" rpy="0 0 0" />
+      <mass value="0.0029963" />
+      <inertia
+        ixx="1.0313E-07"
+        ixy="-5.2511E-12"
+        ixz="1.2764E-13"
+        iyy="1.5641E-07"
+        iyz="-2.315E-11"
+        izz="1.0313E-07" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://my_bot/meshes/link_b.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://my_bot/meshes/link_b.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="joint_b" type="continuous">
+    <origin xyz="-0.024986 -0.035 0.01567" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="link_b" />
+    <axis xyz="0 1 0" />
+  </joint>
+
+  <!-- FRONT/RIGHT WHEEL - FIXED MASS AND INERTIA -->
+  <link name="link_f">
+    <inertial>
+      <origin xyz="6.6859E-07 0.0048787 2.9475E-06" rpy="0 0 0" />
+      <!-- Fixed: Added proper mass (same as other wheel) -->
+      <mass value="0.0029963" />
+      <!-- Fixed: Added proper inertia (same as other wheel) -->
+      <inertia
+        ixx="1.0313E-07"
+        ixy="-5.2511E-12"
+        ixz="1.2764E-13"
+        iyy="1.5641E-07"
+        iyz="-2.315E-11"
+        izz="1.0313E-07" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://my_bot/meshes/link_f.STL" />
+      </geometry>
+      <material name="">
+        <color rgba="1 1 1 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="package://my_bot/meshes/link_f.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="joint_f" type="continuous">
+    <origin xyz="0.026381 -0.035 0.01567" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="link_f" />
+    <axis xyz="0 1 0" />
+  </joint>
+
+  <!-- ========================================== -->
+  <!-- GAZEBO-SPECIFIC ADDITIONS -->
+  <!-- ========================================== -->
+
+  <!-- Gazebo material and friction for base_link -->
+  <gazebo reference="base_link">
+    <material>Gazebo/Blue</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <selfCollide>false</selfCollide>
+  </gazebo>
+
+  <!-- Gazebo material and friction for wheels -->
+  <gazebo reference="link_b">
+    <material>Gazebo/Grey</material>
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>1.0</maxVel>
+  </gazebo>
+
+  <gazebo reference="link_f">
+    <material>Gazebo/White</material>
+    <mu1>1.0</mu1>
+    <mu2>1.0</mu2>
+    <kp>1000000.0</kp>
+    <kd>100.0</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>1.0</maxVel>
+  </gazebo>
+
+  <!-- Differential Drive Plugin -->
+  <gazebo>
+    <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+      <!-- Update rate in Hz -->
+      <updateRate>50</updateRate>
+      
+      <!-- Name of left and right joints -->
+      <leftJoint>joint_b</leftJoint>
+      <rightJoint>joint_f</rightJoint>
+      
+      <!-- Distance between wheels (meters) - calculated from joint origins -->
+      <!-- Distance = |y1 - y2| but both are at y=-0.035, so this is x distance -->
+      <!-- Actual wheel separation = sqrt((0.026381-(-0.024986))^2 + 0^2) = 0.051367 m -->
+      <wheelSeparation>0.051367</wheelSeparation>
+      
+      <!-- Wheel diameter (meters) - estimate based on typical small robot -->
+      <!-- Adjust this based on your actual wheel size from CAD -->
+      <wheelDiameter>0.03</wheelDiameter>
+      
+      <!-- Wheel acceleration -->
+      <wheelAcceleration>1.0</wheelAcceleration>
+      
+      <!-- Maximum torque (Nm) -->
+      <torque>5</torque>
+      
+      <!-- Topic to receive geometry_msgs/Twist commands -->
+      <commandTopic>cmd_vel</commandTopic>
+      
+      <!-- Topic to publish nav_msgs/Odometry -->
+      <odometryTopic>odom</odometryTopic>
+      
+      <!-- Odometry frame -->
+      <odometryFrame>odom</odometryFrame>
+      
+      <!-- Robot frame -->
+      <robotBaseFrame>base_link</robotBaseFrame>
+      
+      <!-- Publish odometry to tf -->
+      <publishTf>1</publishTf>
+      
+      <!-- Publish wheel tf -->
+      <publishWheelTF>true</publishWheelTF>
+      
+      <!-- Publish wheel joint state -->
+      <publishWheelJointState>true</publishWheelJointState>
+      
+      <!-- Use legacy mode for older ROS versions -->
+      <legacyMode>false</legacyMode>
+    </plugin>
+  </gazebo>
+  
+
+</robot>
